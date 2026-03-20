@@ -191,7 +191,7 @@ trait Emulator extends Cross.Module2[String, String] {
         generator.chirrtl().path,
         s"--annotation-file=${generator.chiselAnno().path}",
         "--disable-annotation-unknown",
-        "-dedup",
+        "--no-dedup",
         "-O=debug",
         "--split-verilog",
         "--preserve-values=named",
@@ -220,7 +220,7 @@ trait Emulator extends Cross.Module2[String, String] {
         generator.chirrtl().path,
         s"--annotation-file=${generator.chiselAnno().path}",
         "--disable-annotation-unknown",
-        "-dedup",
+        "--no-dedup",
         "-O=debug",
         "--split-verilog",
         "--preserve-values=named",
@@ -306,7 +306,7 @@ trait Emulator extends Cross.Module2[String, String] {
     def verilatorArgs = T.input {
       Seq(
         // format: off
-        "-Wno-UNOPTTHREADS", "-Wno-STMTDLY", "-Wno-LATCH", "-Wno-WIDTH", "--no-timing",
+        "-Wno-UNOPTTHREADS", "-Wno-STMTDLY", "-Wno-LATCH", "-Wno-WIDTH",
         "--x-assign unique",
         """+define+PRINTF_COND=\$c\(\"verbose\",\"&&\",\"done_reset\"\)""",
         """+define+STOP_COND=\$c\(\"done_reset\"\)""",
