@@ -151,6 +151,8 @@ trait HasRocketCoreIO extends HasRocketCoreParameters {
     val traceStall = Input(Bool())
     val vector = if (usingVector) Some(Flipped(new VectorCoreIO)) else None
     val trace_core_ingress = if (rocketParams.enableTraceCoreIngress) Some(Output(new TraceCoreInterface(traceIngressParams))) else None
+    val monitor_inst  = Output(UInt(32.W))
+    val monitor_inst_valid = Output(Bool())
   })
 }
 
@@ -320,6 +322,9 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
   val id_inst = id_expanded_inst.map(_.bits)
   ibuf.io.imem <> io.imem.resp
   ibuf.io.kill := take_pc
+ 
+  io.monitor_inst := id_inst(0)
+  io.monitor_inst_valid := ibuf.io.inst(0).valid && ibuf.io.inst(0).ready
 
   require(decodeWidth == 1 /* TODO */ && retireWidth == decodeWidth)
   require(!(coreParams.useRVE && coreParams.fpu.nonEmpty), "Can't select both RVE and floating-point")
@@ -383,7 +388,6 @@ class Rocket(tile: RocketTile)(implicit p: Parameters) extends CoreModule()(p)
       id_ctrl.vec := true.B
     }
   }
-
 
   val id_illegal_insn = !id_ctrl.legal ||
     (id_ctrl.mul || id_ctrl.div) && !csr.io.status.isa('m'-'a') ||

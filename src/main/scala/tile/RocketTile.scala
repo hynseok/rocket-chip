@@ -11,7 +11,7 @@ import org.chipsalliance.diplomacy.lazymodule._
 import freechips.rocketchip.devices.tilelink.{BasicBusBlockerParams, BasicBusBlocker}
 import org.chipsalliance.diplomacy.DisableMonitors
 import freechips.rocketchip.diplomacy.{
-  AddressSet, BufferParams
+  AddressSet, BufferParams, BundleBridgeSource
 }
 import freechips.rocketchip.resources.{
   SimpleDevice, Description,
@@ -30,6 +30,8 @@ import freechips.rocketchip.trace.{TraceEncoderParams,TraceEncoderController, Tr
 import freechips.rocketchip.subsystem._
 
 import freechips.rocketchip.util.BooleanToAugmentedBoolean
+
+import freechips.rocketchip.system.InstMonitorBundle
 
 case class RocketTileBoundaryBufferParams(force: Boolean = false)
 
@@ -148,6 +150,8 @@ class RocketTile private(
     Resource(cpuDevice, "reg").bind(ResourceAddress(tileId))
   }
 
+  val monitorNode = BundleBridgeSource(() => new InstMonitorBundle)
+
   override lazy val module = new RocketTileModuleImp(this)
 
   override def makeMasterBoundaryBuffers(crossing: ClockCrossingType)(implicit p: Parameters) = (rocketParams.boundaryBuffers, crossing) match {
@@ -168,6 +172,10 @@ class RocketTileModuleImp(outer: RocketTile) extends BaseTileModuleImp(outer)
     with HasLazyRoCCModule
     with HasICacheFrontendModule {
   val core = Module(new Rocket(outer)(outer.p))
+  
+  outer.monitorNode.bundle.data  := core.io.monitor_inst
+  outer.monitorNode.bundle.valid := core.io.monitor_inst_valid
+
   outer.vector_unit.foreach { v =>
     core.io.vector.get <> v.module.io.core
     v.module.io.tlb <> outer.dcache.module.io.tlb_port
